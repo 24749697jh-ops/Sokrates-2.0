@@ -123,10 +123,10 @@ def ask_sokrates(student_text: str) -> str:
 
 ensure_state()
 
-st.title("🧭 Sokrates 2.1")
+st.title("🧭 Sokrates 2.1.1")
 st.caption("Ich begleite dich – denken musst du selbst.")
 st.caption("Verstehen → Planen → Rechnen → Prüfen")
-st.caption("Installierte Version: 2.1.0")
+st.caption("Installierte Version: 2.1.1")
 
 api_key = os.getenv("OPENAI_API_KEY")
 
