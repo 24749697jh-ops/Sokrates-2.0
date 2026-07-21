@@ -9,6 +9,7 @@ from typing import Any
 import streamlit as st
 from dotenv import load_dotenv
 from openai import OpenAI
+from sokrates_math_editor import math_editor
 from streamlit_paste_button import paste_image_button
 
 from config import (
@@ -19,7 +20,6 @@ from config import (
     MODEL,
     SUPPORTED_UPLOAD_TYPES,
 )
-from math_input import render_input
 from models import TaskAnalysis, TutorState
 from task_analysis import analyze_task
 from teacher_engine import (
@@ -42,15 +42,18 @@ inject_theme()
 
 def ensure_state() -> None:
     defaults = {
-        "started_v2": False,
-        "task_text_v2": "",
-        "analysis_v2": None,
-        "tutor_state_v2": TutorState(),
-        "messages_v2": [],
-        "uploaded_name_v2": None,
-        "uploaded_bytes_v2": None,
-        "uploaded_mime_v2": None,
-        "clear_reply_v2": False,
+        "started_v21": False,
+        "task_text_v21": "",
+        "task_draft_v21": "",
+        "task_reset_v21": 0,
+        "reply_draft_v21": "",
+        "reply_reset_v21": 0,
+        "analysis_v21": None,
+        "tutor_state_v21": TutorState(),
+        "messages_v21": [],
+        "uploaded_name_v21": None,
+        "uploaded_bytes_v21": None,
+        "uploaded_mime_v21": None,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -71,44 +74,39 @@ def as_data_url(data: bytes, mime: str) -> str:
 def store_pasted_image(image: Any) -> None:
     buffer = io.BytesIO()
     image.convert("RGB").save(buffer, format="PNG")
-    st.session_state.uploaded_name_v2 = "goodnotes.png"
-    st.session_state.uploaded_bytes_v2 = buffer.getvalue()
-    st.session_state.uploaded_mime_v2 = "image/png"
+    st.session_state.uploaded_name_v21 = "goodnotes.png"
+    st.session_state.uploaded_bytes_v21 = buffer.getvalue()
+    st.session_state.uploaded_mime_v21 = "image/png"
 
 
 def api_input(student_text: str) -> list[dict[str, Any]]:
-    content: list[dict[str, Any]] = [
-        {
-            "type": "input_text",
-            "text": (
-                f"Ursprüngliche Aufgabe:\n{st.session_state.task_text_v2}\n\n"
-                f"Letzter Schülerbeitrag:\n{student_text}"
-            ),
-        }
-    ]
+    content: list[dict[str, Any]] = [{
+        "type": "input_text",
+        "text": (
+            f"Ursprüngliche Aufgabe:\n{st.session_state.task_text_v21}\n\n"
+            f"Letzter Schülerbeitrag:\n{student_text}"
+        ),
+    }]
 
-    data = st.session_state.uploaded_bytes_v2
-    mime = st.session_state.uploaded_mime_v2
+    data = st.session_state.uploaded_bytes_v21
+    mime = st.session_state.uploaded_mime_v21
     if data and mime:
         encoded = as_data_url(data, mime)
         if mime.startswith("image/"):
             content.append({"type": "input_image", "image_url": encoded, "detail": "high"})
         else:
-            content.append(
-                {
-                    "type": "input_file",
-                    "filename": st.session_state.uploaded_name_v2,
-                    "file_data": encoded,
-                }
-            )
+            content.append({
+                "type": "input_file",
+                "filename": st.session_state.uploaded_name_v21,
+                "file_data": encoded,
+            })
 
     return [{"role": "user", "content": content}]
 
 
 def ask_sokrates(student_text: str) -> str:
-    analysis: TaskAnalysis = st.session_state.analysis_v2
-    state: TutorState = st.session_state.tutor_state_v2
-
+    analysis: TaskAnalysis = st.session_state.analysis_v21
+    state: TutorState = st.session_state.tutor_state_v21
     state.phase = next_phase(state, student_text)
     state.turns += 1
 
@@ -119,17 +117,16 @@ def ask_sokrates(student_text: str) -> str:
         input=api_input(student_text),
         max_output_tokens=MAX_OUTPUT_TOKENS,
     )
-
     answer = response.output_text.strip()
     return answer or phase_question(analysis, state.phase)
 
 
 ensure_state()
 
-st.title("🧭 Sokrates 2.0")
+st.title("🧭 Sokrates 2.1")
 st.caption("Ich begleite dich – denken musst du selbst.")
 st.caption("Verstehen → Planen → Rechnen → Prüfen")
-st.caption("Installierte Version: 2.0.0")
+st.caption("Installierte Version: 2.1.0")
 
 api_key = os.getenv("OPENAI_API_KEY")
 
@@ -144,26 +141,28 @@ with st.sidebar:
         reset_all()
         st.rerun()
 
-    if st.session_state.started_v2 and st.session_state.analysis_v2:
+    if st.session_state.started_v21 and st.session_state.analysis_v21:
         st.divider()
         render_formulas(
-            st.session_state.analysis_v2,
-            "reply_math_v2",
+            st.session_state.analysis_v21,
+            "reply_editor_value_v21",
         )
 
 
-if not st.session_state.started_v2:
-    submitted_task = render_input(
-        "task",
-        "Aufgabe eingeben",
-        "Schreibe oder kopiere die Mathematikaufgabe hier hinein.",
-        "Aufgabe übernehmen",
+if not st.session_state.started_v21:
+    st.markdown("### Aufgabe eingeben")
+    task_result = math_editor(
+        value=st.session_state.task_draft_v21,
+        placeholder="Schreibe die Aufgabe hier hinein. Die Mathe-Tasten schreiben direkt an der Cursorposition.",
+        reset_token=st.session_state.task_reset_v21,
+        key="task_editor_v21",
     )
+    st.session_state.task_draft_v21 = task_result.get("value", "")
 
     st.markdown("### Aus GoodNotes einfügen")
     paste_result = paste_image_button(
         label="📋 Aus Zwischenablage einfügen",
-        key="goodnotes_v2",
+        key="goodnotes_v21",
         errors="raise",
     )
     if paste_result.image_data is not None:
@@ -179,9 +178,9 @@ if not st.session_state.started_v2:
         if size_mb > MAX_FILE_SIZE_MB:
             st.error(f"Die Datei ist größer als {MAX_FILE_SIZE_MB} MB.")
         else:
-            st.session_state.uploaded_name_v2 = upload.name
-            st.session_state.uploaded_bytes_v2 = upload.getvalue()
-            st.session_state.uploaded_mime_v2 = (
+            st.session_state.uploaded_name_v21 = upload.name
+            st.session_state.uploaded_bytes_v21 = upload.getvalue()
+            st.session_state.uploaded_mime_v21 = (
                 upload.type
                 or mimetypes.guess_type(upload.name)[0]
                 or "application/octet-stream"
@@ -189,51 +188,41 @@ if not st.session_state.started_v2:
             st.success(f"Datei bereit: {upload.name}")
 
     if st.button("Mit Sokrates beginnen", type="primary", use_container_width=True):
-        task = submitted_task or " ".join(
-            part for part in (
-                st.session_state.get("task_prose_v2", "").strip(),
-                st.session_state.get("task_math_v2", "").strip(),
-            ) if part
-        ).strip()
-
+        task = st.session_state.task_draft_v21.strip()
         if not api_key:
             st.error("Der OpenAI-Schlüssel fehlt.")
-        elif not task and not st.session_state.uploaded_bytes_v2:
+        elif not task and not st.session_state.uploaded_bytes_v21:
             st.error("Bitte gib eine Aufgabe ein oder lade eine Datei hoch.")
         else:
-            st.session_state.task_text_v2 = task or "Aufgabe aus hochgeladener Datei"
-            st.session_state.analysis_v2 = analyze_task(st.session_state.task_text_v2)
-            st.session_state.tutor_state_v2 = TutorState()
-            st.session_state.messages_v2 = [
-                {
-                    "role": "assistant",
-                    "content": first_question(st.session_state.analysis_v2),
-                }
-            ]
-            st.session_state.started_v2 = True
+            st.session_state.task_text_v21 = task or "Aufgabe aus hochgeladener Datei"
+            st.session_state.analysis_v21 = analyze_task(st.session_state.task_text_v21)
+            st.session_state.tutor_state_v21 = TutorState()
+            st.session_state.messages_v21 = [{
+                "role": "assistant",
+                "content": first_question(st.session_state.analysis_v21),
+            }]
+            st.session_state.started_v21 = True
             st.rerun()
 
 else:
-    analysis: TaskAnalysis = st.session_state.analysis_v2
-    state: TutorState = st.session_state.tutor_state_v2
+    analysis: TaskAnalysis = st.session_state.analysis_v21
+    state: TutorState = st.session_state.tutor_state_v21
 
-    render_task_card(st.session_state.task_text_v2, analysis, state.phase)
-    render_chat(st.session_state.messages_v2)
+    render_task_card(st.session_state.task_text_v21, analysis, state.phase)
+    render_chat(st.session_state.messages_v21)
 
     st.caption(f"Hilfestufe {state.help_level} von 4")
     c1, c2 = st.columns(2)
     with c1:
         if st.button("💡 Kleiner Hinweis", use_container_width=True):
             state.help_level = min(4, state.help_level + 1)
-            hint_text = (
-                "Ich bin unsicher. Gib mir bitte einen kleinen Hinweis, "
-                "aber noch keine vollständige Lösung."
-            )
-            st.session_state.messages_v2.append({"role": "user", "content": hint_text})
+            hint_text = "Ich bin unsicher. Gib mir einen kleinen Hinweis, aber noch keine vollständige Lösung."
+            st.session_state.messages_v21.append({"role": "user", "content": hint_text})
             try:
-                st.session_state.messages_v2.append(
-                    {"role": "assistant", "content": ask_sokrates(hint_text)}
-                )
+                st.session_state.messages_v21.append({
+                    "role": "assistant",
+                    "content": ask_sokrates(hint_text),
+                })
                 st.rerun()
             except Exception as exc:
                 st.error(f"Fehler: {exc}")
@@ -244,20 +233,28 @@ else:
             st.rerun()
 
     st.divider()
-    reply = render_input(
-        "reply",
-        "Dein nächster Schritt",
-        "Erkläre deinen Gedanken oder schreibe einen Rechenschritt.",
-        "An Sokrates senden",
+    st.markdown("### Dein nächster Schritt")
+    reply_result = math_editor(
+        value=st.session_state.reply_draft_v21,
+        placeholder="Erkläre deinen Gedanken oder schreibe einen Rechenschritt.",
+        reset_token=st.session_state.reply_reset_v21,
+        key="reply_editor_v21",
     )
+    st.session_state.reply_draft_v21 = reply_result.get("value", "")
 
-    if reply:
-        st.session_state.messages_v2.append({"role": "user", "content": reply})
+    if st.button(
+        "An Sokrates senden",
+        type="primary",
+        use_container_width=True,
+        disabled=not st.session_state.reply_draft_v21.strip(),
+    ):
+        reply = st.session_state.reply_draft_v21.strip()
+        st.session_state.messages_v21.append({"role": "user", "content": reply})
         try:
             answer = ask_sokrates(reply)
-            st.session_state.messages_v2.append({"role": "assistant", "content": answer})
-            st.session_state["reply_prose_v2"] = ""
-            st.session_state["reply_math_v2"] = ""
+            st.session_state.messages_v21.append({"role": "assistant", "content": answer})
+            st.session_state.reply_draft_v21 = ""
+            st.session_state.reply_reset_v21 += 1
             st.rerun()
         except Exception as exc:
             st.error(f"Die Anfrage konnte nicht verarbeitet werden: {exc}")

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 
-APP_NAME = "Sokrates 2.0"
+APP_NAME = "Sokrates 2.1"
 APP_ICON = "🧭"
 MODEL = os.getenv("OPENAI_MODEL", "gpt-5-mini")
 MAX_OUTPUT_TOKENS = 650

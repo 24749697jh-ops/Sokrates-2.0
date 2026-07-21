@@ -1,47 +1,45 @@
-# Sokrates 2.0 – iPad Edition
+# Sokrates 2.1 – iPad Edition
 
-Sokrates 2.0 ist ein vollständiger Neustart der Kernarchitektur.
+Sokrates 2.1 enthält erstmals einen echten, eigenen Mathematik-Editor.
 
-## Grundprinzip
+## Neue Eingabe
 
-Eine Aufgabe wird beim Start genau einmal analysiert:
+Es gibt nur noch ein einziges Eingabefeld.
 
-1. Thema erkennen
-2. Aufgabentyp erkennen
-3. Gesuchtes bestimmen
-4. Gegebenes bestimmen
-5. passende Formeln festlegen
-6. mit der Phase VERSTEHEN beginnen
+- Normale Texteingabe und Mathematik stehen im selben Feld.
+- `²`, `³`, `π`, `√`, Operatoren und griechische Buchstaben werden direkt
+  an der aktuellen Cursorposition eingefügt.
+- Markierter Text kann mit Bruch-, Potenz- und Wurzelvorlagen umschlossen werden.
+- Die Eingabe wird nicht mehr zwischen zwei Feldern aufgeteilt.
 
-Spätere Schülerantworten können die erkannte Aufgabenart nicht verändern.
+## Technische Lösung
 
-## Getrennte Komponenten
+Die Mathematik-Eingabe ist als echtes Streamlit Custom Component gebaut.
+Damit sie auf dem iPad ohne Ordner hochgeladen werden kann, ist sie in dieser
+einzelnen Wheel-Datei verpackt:
 
-- `task_analysis.py`: analysiert ausschließlich die ursprüngliche Aufgabe
-- `teacher_engine.py`: steuert Verstehen → Planen → Rechnen → Prüfen
-- `math_input.py`: stabile Text- und Mathematikeingabe
-- `formula_library.py`: ausschließlich zur Analyse passende Formeln
-- `ui.py`: Aufgabenkarte, Chat und Formeldarstellung
-- `app.py`: verbindet die Komponenten
+`sokrates_math_editor-0.1.0-py3-none-any.whl`
 
-## Wichtige Verbesserungen
-
-- Die Aufgabe bleibt während der Bearbeitung sichtbar.
-- Die erste Frage gehört immer zur Phase Verstehen.
-- Formelsammlung und Teacher Engine verwenden dieselbe gespeicherte Analyse.
-- Normale Texteingabe und Mathematik-Tastatur haben getrennte Zustände.
-- Keine Unterordner: vollständig für den GitHub-Upload auf dem iPad geeignet.
+Diese Datei muss zusammen mit den Python-Dateien direkt ins Hauptverzeichnis
+des GitHub-Repositories hochgeladen werden.
 
 ## Installation
 
-1. Am besten ein neues GitHub-Repository erstellen, zum Beispiel `Sokrates-2.0`.
-2. ZIP entpacken.
-3. Alle Dateien direkt ins Hauptverzeichnis hochladen.
-4. In Streamlit Community Cloud `app.py` auswählen.
-5. Den bestehenden Secret verwenden:
+1. Alle Dateien aus dem ZIP direkt in das Hauptverzeichnis von `Sokrates-2.0`
+   hochladen und gleichnamige Dateien ersetzen.
+2. Unbedingt auch `sokrates_math_editor-0.1.0-py3-none-any.whl` hochladen.
+3. `requirements.txt` ebenfalls ersetzen.
+4. Streamlit vollständig rebooten.
+5. Oben muss `Installierte Version: 2.1.0` stehen.
 
-```toml
-OPENAI_API_KEY="dein-api-key"
-```
+## Dateien
 
-6. Nach dem Start muss oben `Installierte Version: 2.0.0` stehen.
+- app.py
+- config.py
+- formula_library.py
+- models.py
+- requirements.txt
+- task_analysis.py
+- teacher_engine.py
+- ui.py
+- sokrates_math_editor-0.1.0-py3-none-any.whl
