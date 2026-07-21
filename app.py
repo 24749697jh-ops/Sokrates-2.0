@@ -123,10 +123,10 @@ def ask_sokrates(student_text: str) -> str:
 
 ensure_state()
 
-st.title("🧭 Sokrates 2.1.1")
+st.title("🧭 Sokrates 2.1.2")
 st.caption("Ich begleite dich – denken musst du selbst.")
 st.caption("Verstehen → Planen → Rechnen → Prüfen")
-st.caption("Installierte Version: 2.1.1")
+st.caption("Installierte Version: 2.1.2")
 
 api_key = os.getenv("OPENAI_API_KEY")
 
@@ -159,7 +159,31 @@ if not st.session_state.started_v21:
     )
     st.session_state.task_draft_v21 = task_result.get("value", "")
 
-    st.markdown("### Aus GoodNotes einfügen")
+    start_clicked = st.button(
+        "Aufgabe an Sokrates senden",
+        type="primary",
+        use_container_width=True,
+        disabled=not bool(st.session_state.task_draft_v21.strip()),
+        key="start_task_v212",
+    )
+
+    if start_clicked:
+        task = st.session_state.task_draft_v21.strip()
+        if not api_key:
+            st.error("Der OpenAI-Schlüssel fehlt.")
+        else:
+            st.session_state.task_text_v21 = task
+            st.session_state.analysis_v21 = analyze_task(task)
+            st.session_state.tutor_state_v21 = TutorState()
+            st.session_state.messages_v21 = [{
+                "role": "assistant",
+                "content": first_question(st.session_state.analysis_v21),
+            }]
+            st.session_state.started_v21 = True
+            st.rerun()
+
+    st.divider()
+    st.markdown("### Aus GoodNotes oder Datei einfügen")
     paste_result = paste_image_button(
         label="📋 Aus Zwischenablage einfügen",
         key="goodnotes_v21",
@@ -186,23 +210,10 @@ if not st.session_state.started_v21:
                 or "application/octet-stream"
             )
             st.success(f"Datei bereit: {upload.name}")
-
-    if st.button("Mit Sokrates beginnen", type="primary", use_container_width=True):
-        task = st.session_state.task_draft_v21.strip()
-        if not api_key:
-            st.error("Der OpenAI-Schlüssel fehlt.")
-        elif not task and not st.session_state.uploaded_bytes_v21:
-            st.error("Bitte gib eine Aufgabe ein oder lade eine Datei hoch.")
-        else:
-            st.session_state.task_text_v21 = task or "Aufgabe aus hochgeladener Datei"
-            st.session_state.analysis_v21 = analyze_task(st.session_state.task_text_v21)
-            st.session_state.tutor_state_v21 = TutorState()
-            st.session_state.messages_v21 = [{
-                "role": "assistant",
-                "content": first_question(st.session_state.analysis_v21),
-            }]
-            st.session_state.started_v21 = True
-            st.rerun()
+            st.info(
+                "Bei einer Datei ohne Text bitte zusätzlich eine kurze Aufgabenbeschreibung "
+                "in das Eingabefeld schreiben."
+            )
 
 else:
     analysis: TaskAnalysis = st.session_state.analysis_v21
