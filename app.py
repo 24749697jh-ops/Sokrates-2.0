@@ -9,7 +9,6 @@ from typing import Any
 import streamlit as st
 from dotenv import load_dotenv
 from openai import OpenAI
-from sokrates_math_editor import math_editor
 from streamlit_paste_button import paste_image_button
 
 from config import (
@@ -123,10 +122,10 @@ def ask_sokrates(student_text: str) -> str:
 
 ensure_state()
 
-st.title("🧭 Sokrates 2.1.2")
+st.title("🧭 Sokrates 2.1.3")
 st.caption("Ich begleite dich – denken musst du selbst.")
 st.caption("Verstehen → Planen → Rechnen → Prüfen")
-st.caption("Installierte Version: 2.1.2")
+st.caption("Installierte Version: 2.1.3")
 
 api_key = os.getenv("OPENAI_API_KEY")
 
@@ -151,13 +150,21 @@ with st.sidebar:
 
 if not st.session_state.started_v21:
     st.markdown("### Aufgabe eingeben")
-    task_result = math_editor(
+    st.session_state.task_draft_v21 = st.text_area(
+        "Aufgabe",
         value=st.session_state.task_draft_v21,
-        placeholder="Schreibe die Aufgabe hier hinein. Die Mathe-Tasten schreiben direkt an der Cursorposition.",
-        reset_token=st.session_state.task_reset_v21,
-        key="task_editor_v21",
+        placeholder="Schreibe oder kopiere die Mathematikaufgabe hier hinein.",
+        height=150,
+        key="task_textarea_v213",
+        label_visibility="collapsed",
     )
-    st.session_state.task_draft_v21 = task_result.get("value", "")
+
+    with st.expander("Mathematische Zeichen anzeigen", expanded=True):
+        st.caption(
+            "Bis der eigene Editor auf allen iPads zuverlässig lädt, kannst du "
+            "diese Zeichen kopieren und an der gewünschten Stelle einfügen."
+        )
+        st.code("²  ³  √  π  α  β  γ  Δ   +  −  ×  ÷  =  ≠  ≤  ≥", language=None)
 
     start_clicked = st.button(
         "Aufgabe an Sokrates senden",
@@ -245,13 +252,17 @@ else:
 
     st.divider()
     st.markdown("### Dein nächster Schritt")
-    reply_result = math_editor(
+    st.session_state.reply_draft_v21 = st.text_area(
+        "Antwort",
         value=st.session_state.reply_draft_v21,
         placeholder="Erkläre deinen Gedanken oder schreibe einen Rechenschritt.",
-        reset_token=st.session_state.reply_reset_v21,
-        key="reply_editor_v21",
+        height=130,
+        key="reply_textarea_v213",
+        label_visibility="collapsed",
     )
-    st.session_state.reply_draft_v21 = reply_result.get("value", "")
+
+    with st.expander("Mathematische Zeichen", expanded=False):
+        st.code("²  ³  √  π  α  β  γ  Δ   +  −  ×  ÷  =  ≠  ≤  ≥", language=None)
 
     if st.button(
         "An Sokrates senden",

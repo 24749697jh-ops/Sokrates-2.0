@@ -1,43 +1,27 @@
-# Sokrates 2.1.2 – iPad Edition
+# Sokrates 2.1.3 – Stabilitätsversion
 
-## Behobener Fehler
+Die eigene Mathematik-Komponente wurde vorübergehend entfernt, weil sie auf
+dem iPad nach einem Deployment erneut als leeres Komponentenfenster erschien.
 
-In Version 2.1.0 wurden JavaScript und CSS des eigenen Mathematik-Editors
-mit absoluten Pfaden eingebunden. Innerhalb des Streamlit-Komponentenfensters
-konnten diese Dateien deshalb nicht geladen werden. Sichtbar war nur ein
-leerer grauer Bereich.
+## Diese Version garantiert
 
-Version 2.1.1 verwendet relative Asset-Pfade. Dadurch werden Textfeld und
-Mathematik-Tastatur korrekt im Streamlit-Komponentenfenster geladen.
+- sichtbare und beschreibbare Aufgabeneingabe
+- sichtbaren Button „Aufgabe an Sokrates senden“
+- sichtbare und beschreibbare Antwort-Eingabe
+- stabile Nutzung ohne zusätzliche Wheel-Datei
+- mathematische Unicode-Zeichen als kopierbare Hilfe
 
 ## Upload
 
-Alle Dateien direkt ins Hauptverzeichnis hochladen und ersetzen.
+Alle Dateien ins Hauptverzeichnis hochladen und ersetzen.
 
-Besonders wichtig:
+Alte Dateien wie
 
-- `app.py`
-- `requirements.txt`
+- `sokrates_math_editor-0.1.0-py3-none-any.whl`
 - `sokrates_math_editor-0.1.1-py3-none-any.whl`
 
-Die alte Datei
+können aus GitHub gelöscht werden.
 
-`सokrates_math_editor-0.1.0-py3-none-any.whl`
+Danach Streamlit vollständig rebooten. Oben muss stehen:
 
-wird nicht mehr benötigt. Falls sie noch im Repository liegt, kann sie
-gelöscht werden.
-
-Danach in Streamlit **Reboot app** ausführen.
-
-Oben muss stehen:
-
-`Installierte Version: 2.1.1`
-
-
-## Korrektur in 2.1.2
-
-- Der Button **„Aufgabe an Sokrates senden“** steht jetzt unmittelbar unter
-  dem Mathematik-Editor.
-- GoodNotes- und Datei-Upload stehen darunter und verdecken den Startbutton
-  nicht mehr.
-- Der Button wird aktiv, sobald Text im Editor vorhanden ist.
+`Installierte Version: 2.1.3`
